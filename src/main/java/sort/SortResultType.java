@@ -5,6 +5,7 @@ import java.awt.*;
 public enum SortResultType {
     DEFAULT("default",Color.WHITE),
     CHECKING("checking",Color.RED),
+    GETTING("getting",Color.PINK),
     SORTING("sorting",Color.GREEN);
 
     private String name;

@@ -27,11 +27,13 @@ public class RenderPanel extends JPanel {
         this.height=height;
     }
 
+
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.drawImage(content, 0, 0,width,height, null);
-        //g.drawImage(hud, 0, 0,width,height, null);
+        g.drawImage(hud, 0, 0,width,height, null);
         g.drawImage(data, 0, 0, null);
     }
 

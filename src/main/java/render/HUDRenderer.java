@@ -5,21 +5,21 @@ import sort.SortCollection;
 import sort.SortValue;
 import util.Utilities;
 
-import javax.imageio.ImageIO;
+import javax.swing.plaf.synth.SynthTableUI;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
-import java.io.IOException;
 import java.util.Arrays;
 
-public class ContentRenderer {
+public class HUDRenderer {
     private int width, height;
     private BufferedImage bufferedImage;
     private Graphics2D graphics;
+    private int prevPoint = 0;
+    private int timer = 0, maxTimer = 500;
+    private Color CHECKING_COLOR = new Color(24, 65, 199,100);
 
-    private Color LIGHT = new Color(255, 255, 255), DARK = new Color(0, 0, 0), BACKGROUND = new Color(0, 0, 0), VALID = new Color(255,255,255);
-
-    public ContentRenderer(){
+    public HUDRenderer(){
 
     }
 
@@ -39,33 +39,28 @@ public class ContentRenderer {
 
     public void render(SortCollection collection, boolean refresh) {
         if(collection == null){
-            graphics.clearRect(0, 0, width, height);
+            int[] data = ((DataBufferInt) bufferedImage.getRaster().getDataBuffer()).getData();
+            Arrays.fill(data, 0x00000000);//transparency
             return;
         }
         if(refresh) {
-            graphics.clearRect(0, 0, width, height);
+            int[] data = ((DataBufferInt) bufferedImage.getRaster().getDataBuffer()).getData();
+            Arrays.fill(data, 0x00000000);//transparency
         }
-        if(collection.isDirty()){
-            int length = collection.getLength();
+        if(collection.isDirty() && collection.lastChanged != null){
+            int[] data = ((DataBufferInt) bufferedImage.getRaster().getDataBuffer()).getData();
+            Arrays.fill(data, 0x00000000);//transparency
 
-            for(int x = 0; x < this.width; x++){
-                int index = Utilities.scaleBetween(x,0,length,0,this.width);
-                SortValue sortValue = collection.values[index];
-                int value = Utilities.scaleBetween(sortValue.getValue(),0,this.height,0,collection.getMax());
+            int value = Utilities.scaleBetween(collection.lastChanged.getValue(),0,this.height,0,collection.getMax());
+            int offset = 3;
+            graphics.setColor(CHECKING_COLOR);
+            graphics.drawRect(value-offset,0,value+offset,height);
+            prevPoint = value;
+        }
 
-                graphics.setColor(BACKGROUND);
-                graphics.fillRect(x,0,1,value);
-                if(sortValue.isValid()){
-                    graphics.setColor(VALID);
-                }else{
-                    graphics.setColor(sortValue.getType().getColor());
-
-                }
-                graphics.fillRect(x,value,1,height);
-
-            }
-
-            collection.rendered();
+        timer++;
+        if(timer > maxTimer){
+            timer = 0;
         }
     }
 

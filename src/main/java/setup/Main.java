@@ -3,9 +3,14 @@ package setup;
 import log.Logger;
 import render.ContentRenderer;
 import render.DataRenderer;
+import render.HUDRenderer;
 import render.RenderPanel;
 import sort.SortCollection;
 import sort.SortResultType;
+import sort.sorters.BubbleSort;
+import sort.sorters.HeapSort;
+import sort.sorters.QuickSort;
+import sort.sorters.ShellSort;
 import util.Utilities;
 
 import javax.swing.*;
@@ -20,14 +25,13 @@ public class Main {
 
     private RenderPanel renderPanel;
     private ContentRenderer contentRenderer;
+    private HUDRenderer hudRenderer;
     private DataRenderer dataRenderer;
     private static boolean refreshVisuals = true;
 
     public static Logger LOGGER;
 
     public Thread renderThread, sortThread;
-
-    private int sortDelay = 100;
 
     //sort
     public SortCollection sortCollection = null;
@@ -68,11 +72,13 @@ public class Main {
 
         this.contentRenderer = new ContentRenderer();
         this.contentRenderer.createBufferedImage(this.width,this.height);
+        this.hudRenderer= new HUDRenderer();
+        this.hudRenderer.createBufferedImage(this.width,this.height);
         this.dataRenderer = new DataRenderer();
         this.dataRenderer.createBufferedImage(this.width,this.height);
 
         //
-        this.renderPanel = new RenderPanel(this.contentRenderer.getBufferedImage(),null,this.dataRenderer.getBufferedImage(),this.width,this.height);
+        this.renderPanel = new RenderPanel(this.contentRenderer.getBufferedImage(),this.hudRenderer.getBufferedImage(),this.dataRenderer.getBufferedImage(),this.width,this.height);
         this.renderPanel.setBounds(0, 0, width, height);
         this.renderPanel.setBackground(Color.BLACK);
         frame.add(this.renderPanel);
@@ -101,71 +107,22 @@ public class Main {
 
         this.sortThread = new Thread(() -> {
 
-            /*
-            int i = 0;
-            boolean b = true;
-            while(true){
-                this.sortCollection.values[i].setType(SortResultType.DEFAULT);
-                if(b){
-                    i++;
-                }else{
-                    i--;
-                }
-
-                if(i <= 0){
-                    b = true;
-                }else if(i+1 >= this.sortCollection.getLength()){
-                    b = false;
-                }
-
-                this.sortCollection.values[i].setType(SortResultType.CHECKING);
-
-                this.sortCollection.markDirty();
-
-
-                try {
-                    Thread.sleep(sortDelay);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }*/
-
+            //BubbleSort sort = new BubbleSort(this.sortCollection);
+            //BubbleSort sort = new BubbleSort(this.sortCollection);
+            //ShellSort sort = new ShellSort(this.sortCollection);
+            QuickSort sort = new QuickSort(this.sortCollection);
             while (true){
                 //
-                int n = sortCollection.getLength();
-                int temp = 0;
-                for(int i=0; i < n; i++){
-                    for(int j=1; j < (n-i); j++){
-                        sortCollection.values[j].setType(SortResultType.CHECKING);
-                        sortCollection.markDirty();
-                        Utilities.waitNanos(sortDelay);
-                        if(sortCollection.values[j-1].getValue() > sortCollection.values[j].getValue()){
-                            //swap elements
-                            temp = sortCollection.values[j-1].getValue();
-                            sortCollection.values[j-1].setType(SortResultType.SORTING);
-                            sortCollection.markDirty();
-                            Utilities.waitNanos(sortDelay);
+                sort.process();
 
-                            sortCollection.values[j-1].setValue(sortCollection.values[j].getValue());
-                            sortCollection.values[j].setValue(temp);
-                            sortCollection.values[j].setType(SortResultType.SORTING);
-                            sortCollection.markDirty();
-                            Utilities.waitNanos(sortDelay);
+                sort.reset();
 
-                            sortCollection.values[j-1].setType(SortResultType.DEFAULT);
-                            sortCollection.markDirty();
-                            Utilities.waitNanos(sortDelay);
-
-                        }
-                        sortCollection.values[j].setType(SortResultType.DEFAULT);
-                        sortCollection.markDirty();
-                        Utilities.waitNanos(sortDelay);
-
-                    }
+                if(sortCollection.valid == sortCollection.getLength()){
+                    sortCollection.randomize(sort);
                 }
             }
         });
-        this.sortCollection = SortCollection.create(this,2000,100);
+        this.sortCollection = SortCollection.create(this,2000,2000);
 
         //
         this.renderThread.start();
@@ -175,7 +132,13 @@ public class Main {
     private void renderApp(){
         this.renderPanel.invalidate();
         this.contentRenderer.render(sortCollection, refreshVisuals);
-        this.dataRenderer.render("Test",refreshVisuals,showKeybindings,18);
+        this.hudRenderer.render(sortCollection,refreshVisuals);
+
+        String text = "";
+        if(this.sortCollection != null){
+            text = "Sorted: " + sortCollection.lastSorted + "\nScanned: " + sortCollection.lastScanned + "\nValid: " + sortCollection.valid;
+        }
+        this.dataRenderer.render(text,refreshVisuals,showKeybindings,18);
 
         //
 
@@ -255,6 +218,11 @@ public class Main {
                 width = frame.getWidth();
                 height = frame.getHeight();
 
+                contentRenderer.setSize(width, height);
+                hudRenderer.setSize(width, height);
+                dataRenderer.setSize(width, height);
+
+                renderPanel.setImage(contentRenderer.getBufferedImage(),hudRenderer.getBufferedImage(),dataRenderer.getBufferedImage(),width,height);
                 renderPanel.setBounds(0, 0, width, height);
                 frame.invalidate();
                 frame.validate();

@@ -56,6 +56,10 @@ public class Utilities {
         return min + (max - min) * rand.nextDouble();
     }
 
+    public static float clamp(float val, float min, float max) {
+        return Math.max(min, Math.min(max, val));
+    }
+
     public static float scaleBetween(float unscaledNum, float minAllowed, float maxAllowed, float min, float max) {
         return (maxAllowed - minAllowed) * (unscaledNum - min) / (max - min) + minAllowed;
     }

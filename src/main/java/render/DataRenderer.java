@@ -97,4 +97,10 @@ public class DataRenderer {
     public BufferedImage getBufferedImage() {
         return bufferedImage;
     }
+
+    public void setSize(int width, int height){
+        this.width = width;
+        this.height = height;
+        createBufferedImage(width, height);
+    }
 }
